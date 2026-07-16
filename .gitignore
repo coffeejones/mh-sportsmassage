@@ -1,0 +1,12 @@
+# iOS-appen — hører ikke til website-repoet
+app/
+
+# Den gamle, udgåede hjemmeside
+www/
+
+# Værktøj / styresystem
+.claude/
+.DS_Store
+**/.DS_Store
+node_modules/
+*.log

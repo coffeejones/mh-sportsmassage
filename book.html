@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book en tid — MH Sportsmassage</title>
+  <meta name="description" content="Book en tid online hos MH Sportsmassage v/ Michael Hansen i Bjæverskov — sportsmassage, manuel terapi, akupunktur og cupping. Vælg behandling, dag og tid." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2040%2040'%3E%3Crect%20x='2'%20y='2'%20width='36'%20height='36'%20rx='9'%20fill='%23ffffff'%20stroke='%232c6244'%20stroke-width='2.5'/%3E%3Ctext%20x='20'%20y='27'%20text-anchor='middle'%20font-family='system-ui,Arial,sans-serif'%20font-size='17'%20font-weight='700'%20fill='%232c6244'%20letter-spacing='-.5'%3EMH%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+  <!-- Slank header (fokus på booking) -->
+  <header class="header">
+    <div class="header__inner">
+      <a href="index.html#top" class="brand"><strong>MH</strong> Sportsmassage</a>
+      <div class="header__actions header__actions--book">
+        <a href="index.html" class="backlink">← Forsiden</a>
+        <a href="tel:+4523906068" class="header__phone">23 90 60 68</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Booking -->
+  <main class="section" id="book">
+    <div class="container container--narrow">
+      <header class="section__head section__head--center">
+        <p class="kicker">Book online</p>
+        <h1>Book en tid</h1>
+        <p class="section__intro">
+          Vælg behandling, dag og tid — nemt og uden konto. Ingen betaling online;
+          du betaler med MobilePay eller kontant i klinikken.
+        </p>
+      </header>
+
+      <div class="booking" id="booking">
+        <div class="booking__step">
+          <p class="booking__label"><span class="booking__no">1</span> Vælg behandling</p>
+          <div class="booking__services" id="bkServices"></div>
+        </div>
+
+        <div class="booking__step">
+          <p class="booking__label"><span class="booking__no">2</span> Vælg dag</p>
+          <div class="booking__days" id="bkDays"></div>
+          <p class="booking__dayhint">Stryg for at se flere dage →</p>
+        </div>
+
+        <div class="booking__step">
+          <p class="booking__label"><span class="booking__no">3</span> Vælg tid</p>
+          <div class="booking__times" id="bkTimes"></div>
+        </div>
+
+        <div class="booking__step">
+          <p class="booking__label"><span class="booking__no">4</span> Dine oplysninger</p>
+          <div class="booking__fields">
+            <div class="field">
+              <label for="bkName">Navn</label>
+              <input id="bkName" type="text" autocomplete="name" placeholder="Dit navn" />
+            </div>
+            <div class="field">
+              <label for="bkPhone">Telefon</label>
+              <input id="bkPhone" type="tel" autocomplete="tel" placeholder="Fx 20 12 34 56" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="bkEmail">E-mail <span class="field__opt">— valgfrit, så får du en bekræftelse</span></label>
+            <input id="bkEmail" type="email" autocomplete="email" placeholder="din@email.dk" />
+          </div>
+        </div>
+
+        <div class="booking__foot">
+          <p class="booking__summary" id="bkSummary">Vælg behandling, dag og tid.</p>
+          <button type="button" class="btn btn--solid btn--full" id="bkConfirm" disabled>Bekræft booking</button>
+          <p class="booking__note">
+            Uforpligtende — skal du ombooke eller afmelde, så ring 23 90 60 68, gerne senest 24 timer før.
+            Michael bekræfter din tid pr. telefon.
+          </p>
+          <p class="booking__live" id="bkLive" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <p class="bookpage__reassure">
+        MH Sportsmassage · Bjæverskov · Spørgsmål eller vil du hellere ringe?
+        Ring <a href="tel:+4523906068">23 90 60 68</a>
+      </p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <p class="footer__brand"><strong>MH</strong> Sportsmassage</p>
+        <p class="footer__tag">v/ Michael Hansen · Sportsmassage, manuel terapi &amp; akupunktur · Bjæverskov</p>
+      </div>
+      <nav class="footer__nav" aria-label="Sidefod">
+        <a href="index.html#behandlinger">Behandlinger</a>
+        <a href="index.html#priser">Priser</a>
+        <a href="index.html#om">Om mig</a>
+        <a href="index.html#kontakt">Kontakt</a>
+      </nav>
+    </div>
+    <p class="footer__copy">© <span id="year"></span> MH Sportsmassage v/ Michael Hansen · Tlf. 23 90 60 68</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script src="booking.js"></script>
+</body>
+</html>
