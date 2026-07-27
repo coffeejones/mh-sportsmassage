@@ -168,7 +168,7 @@ h3 { font-size: 1.28rem; letter-spacing: -.01em; }
 .step p { font-size: .98rem; }
 
 /* ===== Prices ===== */
-.prices { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.prices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 .priceblock {
   background: var(--card); border: 1px solid var(--border); border-radius: 14px;
   padding: 1.5rem 1.6rem; box-shadow: var(--shadow);
@@ -178,6 +178,16 @@ h3 { font-size: 1.28rem; letter-spacing: -.01em; }
 .priceblock__amt { font-weight: 800; color: var(--accent); font-size: 1.75rem; white-space: nowrap; margin-top: 1rem; }
 
 .pricelist__note { margin-top: 1.7rem; color: var(--muted); font-size: .96rem; }
+
+.insurance {
+  margin-top: 1.5rem; background: var(--accent-soft);
+  border: 1px solid var(--border); border-radius: 14px;
+  padding: 1.3rem 1.5rem;
+}
+.insurance__title { font-weight: 700; color: var(--ink); margin-bottom: .55rem; }
+.insurance__text { color: var(--text); font-size: .97rem; max-width: 62ch; }
+.insurance__text + .insurance__text { margin-top: .5rem; }
+.insurance strong { color: var(--accent-dk); }
 
 /* ===== About ===== */
 .about { display: grid; grid-template-columns: .82fr 1.18fr; gap: clamp(1.8rem, 5vw, 3.8rem); align-items: center; }
@@ -191,6 +201,18 @@ h3 { font-size: 1.28rem; letter-spacing: -.01em; }
 .about__facts { margin-top: 1.5rem; display: grid; gap: .55rem; }
 .about__facts li { position: relative; padding-left: 1.7rem; color: var(--ink); }
 .about__facts li::before { content: "✓"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+.about__creds { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-top: clamp(1.8rem, 4vw, 2.8rem); }
+.cred {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 1.4rem 1.6rem; box-shadow: var(--shadow);
+}
+.cred__title { font-weight: 700; color: var(--ink); margin-bottom: .8rem; }
+.cred__list { display: grid; gap: .45rem; }
+.cred__list li { position: relative; padding-left: 1.4rem; color: var(--text); }
+.cred__list li::before { content: "•"; position: absolute; left: .25rem; color: var(--accent); font-weight: 700; }
+.cred__text { color: var(--text); font-size: .97rem; }
+.cred__text strong, .cred strong { color: var(--accent-dk); }
 
 /* ===== Reviews ===== */
 .reviews { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }

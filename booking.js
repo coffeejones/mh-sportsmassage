@@ -15,8 +15,9 @@
   // ---------- Michael's config ----------
   // NOTE: opening hours are PLACEHOLDERS — Michael must confirm his real hours.
   const SERVICES = [
-    { key: "30", name: "30 minutter", desc: "Fokuseret behandling af ét område",   minutes: 30, price: 350 },
+    { key: "30", name: "30 minutter", desc: "Fokuseret behandling af ét område",   minutes: 30, price: 300 },
     { key: "60", name: "60 minutter", desc: "Grundig behandling af flere områder", minutes: 60, price: 500 },
+    { key: "90", name: "90 minutter", desc: "Helkropsmassage",                     minutes: 90, price: 750 },
   ];
   // weekday 0=søn..6=lør → opening window (local Danish time). Closed days omitted.
   const HOURS = {
@@ -95,6 +96,7 @@
     name:     root.querySelector("#bkName"),
     phone:    root.querySelector("#bkPhone"),
     email:    root.querySelector("#bkEmail"),
+    note:     root.querySelector("#bkNote"),
     summary:  root.querySelector("#bkSummary"),
     confirm:  root.querySelector("#bkConfirm"),
     live:     root.querySelector("#bkLive"),
@@ -259,6 +261,7 @@
         name: el.name.value.trim(),
         phone: el.phone.value.trim(),
         email: el.email ? el.email.value.trim() : "",
+        note: el.note ? el.note.value.trim() : "",
       });
     } catch {
       el.confirm.textContent = original;
