@@ -33,9 +33,13 @@ body {
   color: var(--text);
   background: var(--bg);
   line-height: 1.7;
-  font-size: 17px;
+  font-size: 1.0625rem;   /* 17px som standard, men følger brugerens egen indstilling */
   -webkit-font-smoothing: antialiased;
 }
+/* Enhver display-regel slår [hidden] i almindelig kaskade. Uden det her
+   ville .mtsum{display:grid} og .backlink{display:inline-flex} gøre
+   skjulte elementer synlige igen. */
+[hidden] { display: none !important; }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 ul, ol { list-style: none; }
@@ -349,17 +353,64 @@ h3 { font-size: 1.28rem; letter-spacing: -.01em; }
 .booking__fields { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
 /* foot */
-.booking__foot { display: grid; gap: .9rem; border-top: 1px solid var(--border); padding-top: 1.6rem; }
-.booking__summary {
-  color: var(--ink); font-weight: 600; font-size: 1.04rem;
-  background: var(--bg-soft); border-radius: 10px; border-left: 3px solid var(--accent);
-  padding: .8rem 1rem; margin: 0;
+.booking__foot { display: grid; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1.6rem; }
+
+/* "Din tid": den lille kvittering, kunden læser lige før hun binder sig */
+.tid { background: var(--bg-soft); border-radius: 12px; padding: 1.15rem 1.25rem 1.05rem; }
+.tid__title {
+  margin: 0 0 .95rem; color: var(--accent);
+  font-size: .82rem; font-weight: 700; line-height: 1.3;
+  text-transform: uppercase; letter-spacing: .09em;
 }
-.booking__summary .price { font-family: var(--font-serif); color: var(--accent-dk); }
-.booking__missing { color: var(--accent-dk); }
+
+/* max-content, ikke en fast rem-bredde: etiketkolonnen kan ikke løbe over
+   på en anden systemskrift (Roboto, Segoe UI) */
+.tid__list {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 1.3rem; row-gap: .55rem; align-items: baseline;
+}
+.tid__label { margin: 0; color: var(--text); font-size: .93rem; line-height: 1.45; }
+.tid__value {
+  margin: 0; color: var(--ink); font-weight: 600; font-size: 1rem; line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+/* endnu ikke valgt */
+.tid__value.tid__value--wait { color: var(--text); font-weight: 400; font-variant-numeric: normal; }
+.tid__value.tid__value--wait.tid__value--next { color: var(--accent-dk); font-weight: 600; }
+
+/* stregen adskiller prisen fra detaljerne */
+.tid__rule { grid-column: 1 / -1; height: 0; border-top: 1px solid var(--border); margin: .35rem 0 .15rem; }
+
+.tid__label--sum { color: var(--ink); font-weight: 600; }
+.tid__value--sum:not(.tid__value--wait) {
+  font-family: var(--font-serif); font-size: 1.32rem; font-weight: 700;
+  color: var(--accent-dk); line-height: 1.15;
+}
+
+.tid__pay { margin: .95rem 0 0; color: var(--text); font-size: .86rem; line-height: 1.5; }
+
+/* min-height holder pladsen, så knappen aldrig flytter sig mens man taster */
+.tid__gap {
+  margin: 0; min-height: 1.45em; text-align: center;
+  color: var(--accent-dk); font-size: .95rem; font-weight: 600; line-height: 1.45;
+}
+
 .booking__note { color: var(--muted); font-size: .9rem; text-align: center; margin: 0; }
+.booking__note a { color: var(--accent); font-weight: 600; white-space: nowrap; }
+.booking__note a:hover { text-decoration: underline; }
 .booking__live { color: var(--accent-dk); font-size: .95rem; text-align: center; margin: 0; }
 .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* Smal skærm og forstørret tekst: etiketten lægger sig over værdien.
+   Enheden er em og ikke px, så 150 % tekstzoom rammer den samme regel. */
+@media (max-width: 35em) {
+  .tid { padding: 1rem 1.05rem; }
+  .tid__list { grid-template-columns: 1fr; row-gap: .05rem; align-items: start; }
+  .tid__label { font-size: .85rem; }
+  .tid__value { margin-bottom: .5rem; }
+  .tid__value.tid__value--sum { margin-bottom: 0; }
+  .tid__rule { margin: .3rem 0 .55rem; }
+}
 
 /* success */
 .booking--done { text-align: center; place-items: center; padding: clamp(2rem, 5vw, 3.4rem); }
@@ -444,4 +495,422 @@ h3 { font-size: 1.28rem; letter-spacing: -.01em; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   * { transition: none !important; }
+}
+
+/* ===== "Ingen åbne tider" (kundesiden, normaltilstand ved lukket-som-standard) ===== */
+.booking--lukket { text-align: center; place-items: center; padding: clamp(2rem, 5vw, 3.4rem); }
+.booking__lukket { display: grid; gap: .7rem; justify-items: center; max-width: 420px; }
+.booking__lukket h2 { font-size: 1.4rem; }
+.booking__lukket p { color: var(--text); margin: 0; }
+.booking__lukket .btn { margin-top: .6rem; }
+
+/* ===== Mine tider (Michaels egen side) ===== */
+.admin .booking__fields--login { grid-template-columns: 1fr; gap: 1rem; }
+
+.mtfaner { display: flex; gap: .5rem; margin-bottom: 1.4rem; }
+.mtfane {
+  flex: 1; font: inherit; font-weight: 600; cursor: pointer; min-height: 44px;
+  color: var(--ink); background: #fff; border: 1.5px solid var(--border);
+  border-radius: 10px; padding: .6rem 1rem;
+}
+.mtfane[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.mtsum { color: var(--text); font-size: .97rem; margin: 0 0 1.2rem; }
+.mtuge {
+  margin: 1.5rem 0 .6rem; color: var(--accent); font-size: .78rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .09em;
+}
+.mtuge:first-child { margin-top: 0; }
+
+.mtdage { display: grid; gap: .5rem; }
+.mtdag { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; }
+.mtdag--aaben { border-color: var(--accent); }
+.mtdag__knap {
+  width: 100%; display: flex; align-items: center; gap: .9rem; text-align: left;
+  font: inherit; cursor: pointer; background: none; border: 0;
+  padding: .7rem .9rem; min-height: 56px; color: var(--ink);
+}
+.mtdag__knap:hover { background: var(--bg-soft); }
+.mtdag__dato { display: grid; justify-items: center; flex: none; width: 52px; line-height: 1.15; }
+.mtdag__wd { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.mtdag__num { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; }
+.mtdag__mo { font-size: .72rem; color: var(--muted); }
+.mtdag__midt { flex: 1; min-width: 0; display: grid; gap: .18rem; }
+.mtdag__tider { font-weight: 600; font-variant-numeric: tabular-nums; }
+.mtdag:not(.mtdag--aaben) .mtdag__tider { color: var(--muted); font-weight: 400; }
+.mtdag__naar {
+  display: inline-block; margin-right: .5rem; color: var(--accent-dk);
+  font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+}
+.mtdag__maerkat { font-size: .8rem; color: var(--muted); }
+.mtdag__hoejre { flex: none; }
+.mtdag__pille {
+  display: inline-block; background: var(--accent-soft); color: var(--accent-dk);
+  font-size: .78rem; font-weight: 700; border-radius: 999px; padding: .25rem .6rem; white-space: nowrap;
+}
+
+.mtpanel { border-top: 1px solid var(--border); padding: 1rem .9rem 1.1rem; background: var(--bg-soft); display: grid; gap: .9rem; }
+.mtpanel__tom { margin: 0; color: var(--text); font-size: .95rem; }
+.mtpanel__hjaelp { margin: 0; color: var(--accent-dk); font-size: .93rem; font-weight: 600; }
+.mtpanel__besked {
+  margin: 0; background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  padding: .7rem .85rem; color: var(--ink); font-size: .93rem;
+}
+.mtvinduer { display: grid; gap: .45rem; }
+.mtvindue {
+  display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+  background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: .55rem .5rem .55rem .85rem;
+}
+.mtvindue__tid { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.mtvindue__fjern {
+  font: inherit; font-size: .88rem; font-weight: 600; cursor: pointer; min-height: 44px;
+  color: var(--accent-dk); background: none; border: 0; padding: 0 .6rem; text-decoration: underline;
+}
+.mtgitter { gap: .45rem; }
+.mtgitter .slot { min-height: 44px; font-size: .93rem; }
+.slot--aaben { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent-dk); }
+.mtpanel__foed { display: grid; gap: .6rem; }
+.mtpanel__opsum { margin: 0; color: var(--ink); font-weight: 600; font-size: .95rem; }
+
+.mtbookinger { display: grid; gap: .6rem; }
+.mtbooking { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: .9rem 1rem; display: grid; gap: .45rem; }
+.mtbooking__tid { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.mtbooking__ydelse { display: block; font-weight: 400; font-size: .88rem; color: var(--muted); }
+.mtbooking__navn { margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--ink); }
+.mtbooking__ring { justify-self: start; min-height: 44px; display: inline-flex; align-items: center; }
+.mtbooking__besked summary { cursor: pointer; color: var(--accent-dk); font-size: .9rem; font-weight: 600; min-height: 30px; }
+.mtbooking__besked p { margin: .4rem 0 0; color: var(--text); font-size: .93rem; }
+.mtbooking__aflys { justify-self: start; }
+
+.mtlink {
+  font: inherit; font-size: inherit; cursor: pointer; color: var(--accent);
+  background: none; border: 0; padding: .2rem 0; text-decoration: underline; font-weight: 600;
+}
+
+@media (max-width: 35em) {
+  .mtdag__knap { gap: .7rem; padding: .7rem .7rem; }
+  .mtdag__dato { width: 46px; }
+  /* 66px giver 4 kolonner i stedet for 3, altså 9 rækker i stedet for 12.
+     Panelet falder cirka 150px, og Gem rykker op mod folden. */
+  .mtgitter { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); }
+}
+
+
+/* ---- Mine tider: netværk, tilstand og krop ---- */
+
+/* Ugeoverskriften bærer nu ugens facit, så han kan finde hullerne
+   ved at læse fem linjer i stedet for otteogtyve. */
+.mtuge { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
+.mtuge__sum {
+  color: var(--muted); font-weight: 600; letter-spacing: 0;
+  text-transform: none; font-size: .8rem; font-variant-numeric: tabular-nums;
+}
+
+.mtsum { display: grid; gap: .25rem; }
+.mtsum__naeste { color: var(--ink); font-weight: 600; }
+.mtsum__tal { color: var(--muted); font-size: .9rem; }
+.mtstatus { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* Ugemt er en synlig tilstand, ikke en usynlig. Samme vægt som aftale-pillen,
+   så en statusbesked aldrig overdøver en rigtig kunde. */
+.mtdag--ugemt { border-color: var(--accent); }
+.mtdag__hoejre { flex: none; display: grid; gap: .25rem; justify-items: end; }
+.mtdag__status {
+  display: inline-block; background: #fff; color: var(--accent-dk);
+  border: 1.5px solid var(--accent); font-size: .78rem; font-weight: 700;
+  border-radius: 999px; padding: .2rem .55rem; white-space: nowrap;
+}
+
+/* Mærkaten bar den mest forvirrende oplysning på rækken i sidens
+   mindste og blegeste skrift. */
+.mtdag__maerkat { font-size: .95rem; color: var(--text); }
+
+/* .mtdag har overflow: hidden, så en fokusring 2px UDEN for knappen
+   bliver klippet væk på alle fire sider. Tegn den indad. */
+.mtdag__knap:focus-visible {
+  outline: 2px solid var(--accent-dk); outline-offset: -3px; border-radius: 10px;
+}
+
+/* Dagens aftaler i panelet: klokkeslæt, navn og tryk for at ringe. */
+.mtaftale {
+  display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  padding: .55rem .5rem .55rem .85rem;
+}
+.mtaftale__tid { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.mtaftale__navn { flex: 1; min-width: 0; color: var(--text); font-size: .93rem; }
+.mtaftale__ring {
+  font: inherit; font-size: .88rem; font-weight: 600; min-height: 44px;
+  display: inline-flex; align-items: center; padding: 0 .8rem; text-decoration: none;
+  color: var(--accent-dk); background: #fff;
+  border: 1.5px solid var(--border); border-radius: 8px;
+}
+.mtsamme { display: grid; gap: .45rem; }
+
+/* Fjern var et understreget ord. Nu er det en flade. */
+.mtvindue__fjern {
+  background: #fff; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 0 .9rem; text-decoration: none;
+}
+
+/* En åben halv time og en lukket adskilte sig med 1,24:1 mod hvid.
+   En rigtig kant i accent ligger over 7:1 og kan ses i sollys. */
+.slot--aaben {
+  background: var(--accent-soft); border-color: var(--accent); border-width: 2px;
+  color: var(--accent-dk); font-weight: 700;
+}
+/* Stiplet, ikke en farve: forskellen skal overleve gråtoner.
+   Skal stå EFTER .slot--aaben, en halv time kan være både åben og booket. */
+.slot--optaget { border-style: dashed; }
+
+/* Ventetilstanden må ikke arve .btn:disabled's opacity .5, ellers er
+   teksten "Gemmer…" ulæselig præcis mens han stirrer på den. */
+.btn--venter:disabled { opacity: 1; background: var(--accent-dk); color: #fff; }
+
+/* 44px på de tre flader, der manglede det. Aflys flyttes væk fra Ring. */
+.mtlink { min-height: 44px; display: inline-flex; align-items: center; padding: 0 .15rem; }
+.mtbooking__besked summary { min-height: 44px; display: flex; align-items: center; }
+.mtbooking__aflys {
+  margin-top: .5rem; padding-top: .6rem; border-top: 1px solid var(--border);
+  justify-self: stretch; justify-content: flex-start;
+}
+.admin .backlink { min-height: 44px; display: inline-flex; align-items: center; padding: 0 .5rem; }
+/* ===== Mine tider: KALENDEREN. Erstatter dagslisten. =====================
+   Kalenderen er den ENESTE visning og skal derfor bære alt det, listen bar.
+   Ingen tilstand skelnes med kulør. Forskellene er kantens tykkelse, kantens
+   mønster, fyld mod tomt, en streg gennem tiden, en omvendt bjælke og et tal.
+   Alt sammen overlever gråtoner, sollys og et par øjne på 55.
+
+   Koderne siger PRÆCIS det samme som i tids-gitteret i panelet, der ligger
+   synligt lige under: fyld plus hel kant er .slot--aaben, altså "åben, kan
+   bookes". Stiplet er .slot--optaget, altså "kunden kan ikke tage den".
+   ======================================================================== */
+
+.mtdage { display: grid; gap: .5rem; }
+.mtkal  { --kal-gap: 4px; display: grid; gap: 1.15rem; }
+
+/* Ugedagsrækken står ÉN gang, øverst. Søjlerne er faste hele vejen ned:
+   mandag er altid søjle et, fordi hans vagtplan også er mandag til søndag. */
+.mtkal__wd, .mtkaluge__dage {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--kal-gap);
+}
+.mtkal__wd {
+  margin-bottom: -.5rem; text-align: center; color: var(--muted);
+  font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+
+.mtkaluge { display: grid; gap: .5rem; }
+.mtkaluge .mtuge { margin: 0; }
+
+/* ---- én dag ---- */
+.mtkaldag {
+  position: relative; overflow: hidden; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  min-height: 74px; padding: 5px 1px 4px;
+  font: inherit; text-align: center; color: var(--ink); cursor: pointer;
+  background: #fff; border: 1.5px solid var(--border); border-radius: 9px;
+  transition: border-color .18s, background .18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mtkaldag__mikro {
+  min-height: 11px; line-height: 11px; font-size: .64rem; font-weight: 700;
+  letter-spacing: -.01em; color: var(--accent-dk);
+}
+.mtkaldag__num {
+  min-width: 22px; min-height: 22px; display: grid; place-items: center; border-radius: 50%;
+  font-family: var(--font-serif); font-size: 1.15rem; font-weight: 400; line-height: 1.1;
+  font-variant-numeric: tabular-nums; color: var(--muted);
+}
+.mtkaldag__tid {
+  min-height: 14px; line-height: 14px; font-size: .8rem; font-weight: 700;
+  letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--ink);
+}
+/* Kunderne: en bjælke i bunden med antallet i omvendt tekst. Det er det
+   eneste sted i gitteret, hvor der står "her kommer et rigtigt menneske",
+   og derfor er det den kraftigste markering på cellen. */
+.mtkaldag__kunder {
+  margin-top: auto; align-self: stretch; min-height: 15px; line-height: 15px;
+  background: var(--accent-dk); color: #fff; border-radius: 4px;
+  font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+
+/* LUKKET: hvid flade, hårstreg, dagtallet i normal vægt. En tom æske. */
+
+/* ÅBEN: fyld plus dobbelt så tyk hel kant. Padding kompenserer for
+   kanttykkelsen, så indholdsbredden er præcis den samme som i en lukket
+   celle: 45,26 minus 3 minus 2 er 40,26 px begge steder. */
+.mtkaldag--aaben {
+  background: var(--accent-soft); border: 2px solid var(--accent); padding: 4.5px .5px 3.5px;
+}
+.mtkaldag--aaben .mtkaldag__num { color: var(--ink); font-weight: 700; }
+
+/* SPÆRRET: kunder kan ikke booke dagen. Stiplet betyder nøjagtig det samme
+   på .slot--optaget i tids-gitteret 200 px længere nede. */
+.mtkaldag--spaerret { border-style: dashed; }
+
+/* UDEN: åbningen VIRKER ikke (for sent eller for kort). Tiden er streget
+   over. En overstregning er en form, ikke en farve, og den siger uden ord
+   at klokkeslættet står der, men ikke gælder. */
+.mtkaldag--uden .mtkaldag__tid {
+  text-decoration: line-through; text-decoration-thickness: 1.5px;
+}
+
+/* I DAG: en ring om dagtallet. Et andet sted end kanten, så den aldrig
+   kan forveksles med tilstanden. */
+/* Ringen om dagtallet klippede cifret, fordi cirklen kun er 22px og tallet
+   fylder 18. Mikrolinjen siger allerede "i dag" med ord, som ikke skal
+   afkodes, så markeringen flyttes derhen. */
+.mtkaldag--idag .mtkaldag__mikro {
+  background: var(--accent-dk); color: #fff; border-radius: 999px;
+  padding: 0 .3rem; justify-self: center;
+}
+
+/* IKKE GEMT: en bjælke langs cellens overkant. Der ligger arbejde her, som
+   ikke er sendt af sted. Den bor i toppen, hvor intet andet bor. */
+.mtkaldag--ugemt::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+  background: var(--accent-dk);
+}
+
+/* VALGT: fyldt accent med hvid skrift, som .day[aria-pressed="true"] på
+   kundesiden. Omvendt tekst kan ikke forveksles med den lyse åben-flade,
+   heller ikke i gråtoner, og panelet lige under siger dagens tilstand med ord. */
+.mtkaldag--valgt { background: var(--accent); border-color: var(--accent-dk); }
+.mtkaldag--valgt .mtkaldag__mikro,
+.mtkaldag--valgt .mtkaldag__num,
+.mtkaldag--valgt .mtkaldag__tid { color: #fff; }
+.mtkaldag--valgt.mtkaldag--idag .mtkaldag__mikro { background: #fff; color: var(--accent-dk); }
+.mtkaldag--valgt .mtkaldag__kunder { background: #fff; color: var(--accent-dk); }
+.mtkaldag--valgt::before { background: #fff; }
+
+/* UDEN FOR HORISONTEN: dage før i dag og dage efter de 28. Ingen ramme,
+   ingen flade, ingen knap. En celle uden æske kan ikke misforstås som en
+   æske, man kan trykke på. */
+.mtkaldag--ude { background: none; border-color: transparent; cursor: default; }
+.mtkaldag--ude .mtkaldag__num { color: var(--muted); opacity: .5; }
+
+/* Hover pakkes ind: på iOS hænger :hover på det sidst trykkede element, og
+   en lukket dag må aldrig komme til at se åben ud, fordi han rørte den. */
+@media (hover: hover) {
+  .mtkaldag:hover:not(.mtkaldag--ude):not(.mtkaldag--valgt) { border-color: var(--accent-dk); }
+}
+/* .mtkaldag har overflow: hidden til bjælken i toppen, så en ring UDEN for
+   kanten klippes væk. Samme lærepenge som .mtdag__knap:focus-visible. */
+.mtkaldag:focus-visible { outline: 2px solid var(--accent-dk); outline-offset: -3px; border-radius: 9px; }
+.mtkaldag--valgt:focus-visible { outline-color: #fff; }
+
+/* ---- linjerne under ugen: de tal, en celle på 45 px ikke kan rumme ----
+   De findes KUN for de dage, han har åbnet eller rørt ved, altså typisk to
+   til fire pr. uge. De forklarer ikke gitterets former, de leverer fakta. */
+.mtkalfakta { display: grid; gap: .3rem; }
+.mtkalfakta:empty { display: none; }
+.mtkalfakta__linje {
+  margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .65rem;
+  font-size: .88rem; line-height: 1.45; color: var(--text);
+}
+.mtkalfakta__dag { min-width: 3.7em; color: var(--ink); font-weight: 700; }
+.mtkalfakta__tid { color: var(--ink); font-variant-numeric: tabular-nums; }
+.mtkalfakta__note { color: var(--muted); }
+.mtkalfakta__note--ugemt { color: var(--ink); font-weight: 700; }
+.mtkalfakta__note--gemt  { color: var(--accent-dk); font-weight: 600; }
+
+/* ---- dagspanelet: folder ud i sin egen uge, ikke under hele kalenderen ---- */
+.mtkalpanel {
+  --kant: 1.5px;
+  position: relative; margin-top: .25rem; background: #fff;
+  border: var(--kant) solid var(--accent); border-radius: 12px;
+}
+.mtkalpanel:focus { outline: none; }
+.mtkalpanel:focus-visible { outline: 2px solid var(--accent-dk); outline-offset: 2px; }
+/* Næbbet peger på midten af den trykkede celle. Cellebredden er
+   (W - 6g) / 7, og W er 100% plus de to kanter, fordi procenter regnes af
+   padding-boksen. --kol er søjlenummeret, 0 er mandag. */
+.mtkalpanel::before {
+  content: ""; position: absolute; top: -10px;
+  left: calc((100% + 2 * var(--kant) - 6 * var(--kal-gap)) / 7 * (var(--kol) + .5)
+             + var(--kol) * var(--kal-gap) - var(--kant));
+  transform: translateX(-50%); width: 0; height: 0;
+  border-left: 9px solid transparent; border-right: 9px solid transparent;
+  border-bottom: 10px solid var(--accent);
+}
+.mtkalpanel__hoved {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .8rem;
+  padding: .75rem .9rem .4rem;
+}
+.mtkalpanel__dag { color: var(--ink); font-weight: 700; font-size: 1.05rem; }
+.mtkalpanel__tid { color: var(--ink); font-size: .95rem; font-variant-numeric: tabular-nums; }
+.mtkalpanel__luk {
+  margin-left: auto; min-height: 44px; padding: 0 .95rem;
+  font: inherit; font-size: .93rem; font-weight: 600; cursor: pointer;
+  color: var(--accent-dk); background: #fff;
+  border: 1.5px solid var(--border); border-radius: 8px;
+}
+.mtkalpanel__luk:hover { border-color: var(--accent); }
+/* Listen sagde HVAD. Her står også HVORFOR, med hans egne tal. */
+.mtkalpanel__stand { margin: 0 .9rem .8rem; color: var(--text); font-size: .95rem; }
+.mtkalpanel > .mtpanel { border-radius: 0 0 10px 10px; }
+
+.mtkalfod { margin: 0; color: var(--muted); font-size: .88rem; }
+
+/* ---- telefon ----
+   Ved 360 px: container 324,8 px, gitteret låner 8 px i hver side, seks
+   mellemrum a 4 px, altså (340,8 - 24) / 7 = 45,26 px pr. dag. Trykfladen
+   er 45,26 x 74 px, over 44 i begge retninger. */
+@media (max-width: 35em) {
+  .mtkal__wd, .mtkaluge__dage, .mtkalpanel { margin-inline: -.5rem; }
+}
+/* 352 px og derunder er en aktuel iPhone med Vis og lysstyrke sat til
+   Zoomet. Den findes, og han er præcis typen, der slår den til. Gitteret
+   låner mere luft og strammer mellemrummet: (313,6 - 12) / 7 = 43,1 px.
+   Ét komma noget under retningslinjen, men 74 px højt, og alternativet,
+   et vandret rullende gitter, er værre. */
+@media (max-width: 22em) {
+  .mtkal { --kal-gap: 2px; }
+  .mtkal__wd, .mtkaluge__dage, .mtkalpanel { margin-inline: -.9rem; }
+  .mtkaldag__mikro { font-size: .6rem; }
+}
+@media (min-width: 34em) {
+  .mtkal { --kal-gap: 6px; }
+  .mtkaldag { min-height: 88px; padding: 7px 4px 6px; }
+  .mtkaldag--aaben { padding: 6.5px 3.5px 5.5px; }
+  .mtkaldag__mikro { min-height: 14px; line-height: 14px; font-size: .74rem; }
+  .mtkaldag__num { min-width: 28px; min-height: 28px; font-size: 1.45rem; }
+  .mtkaldag__tid { min-height: 17px; line-height: 17px; font-size: .95rem; }
+  .mtkaldag__kunder { min-height: 18px; line-height: 18px; font-size: .85rem; }
+  .mtkal__wd { font-size: .8rem; }
+}
+
+/* ---- Måneds-bladring ---- */
+.mtkalnav {
+  display: flex; align-items: center; gap: .5rem; margin-bottom: .7rem;
+}
+.mtkalnav__midt { flex: 1; min-width: 0; text-align: center; display: grid; gap: .1rem; }
+.mtkalnav__navn {
+  margin: 0; color: var(--ink); font-weight: 700; font-size: 1.05rem;
+  text-transform: capitalize;
+}
+.mtkalnav__hjem { font-size: .85rem; min-height: 0; justify-self: center; }
+.mtkalnav__pil {
+  flex: none; width: 44px; min-height: 44px; font: inherit; font-size: 1.5rem;
+  line-height: 1; cursor: pointer; color: var(--accent-dk); background: #fff;
+  border: 1.5px solid var(--border); border-radius: 10px;
+}
+.mtkalnav__pil:hover:not(:disabled) { border-color: var(--accent); }
+.mtkalnav__pil:disabled { opacity: .35; cursor: not-allowed; }
+
+/* Skæve klokkeslæt ("17.30 til 21") kan ikke være på én linje i en 45px celle,
+   uanset skriftstørrelse. To bevidste linjer slår et tilfældigt brud midt i
+   et tal. Cellen har plads, fordi mikrolinjen ofte er tom. */
+.mtkaldag__tid { white-space: nowrap; }
+.mtkaldag__tid--to {
+  display: grid; line-height: 1.05; min-height: 26px; align-content: center;
+  font-size: .72rem;
+}
+
+/* Mail-status på et bookingkort. Paletten har ingen rød, så en fejl bæres af
+   ord, vægt og en kant, ikke af kulør. Samme greb som .mtpanel__besked. */
+.mtbooking__mail { margin: .35rem 0 0; font-size: .88rem; color: var(--muted); }
+.mtbooking__mail--fejl {
+  color: var(--ink); font-weight: 600; background: #fff;
+  border: 1.5px solid var(--accent-dk); border-radius: 8px; padding: .5rem .7rem;
 }

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mine tider</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Ikonet er omvendt af hjemmesidens (fyldt grønt med hvidt MH), så Michael
+       aldrig kan komme til at åbne kundesiden i stedet for sin egen side. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2040%2040'%3E%3Crect%20x='2'%20y='2'%20width='36'%20height='36'%20rx='9'%20fill='%232c6244'/%3E%3Ctext%20x='20'%20y='27'%20text-anchor='middle'%20font-family='system-ui,Arial,sans-serif'%20font-size='17'%20font-weight='700'%20fill='%23ffffff'%20letter-spacing='-.5'%3EMH%3C/text%3E%3C/svg%3E" />
+</head>
+<body class="admin">
+
+  <header class="header">
+    <div class="header__inner">
+      <span class="brand"><strong>MH</strong> Mine tider</span>
+      <div class="header__actions header__actions--book">
+        <button type="button" class="backlink" id="mtLogUd" hidden>Log ud</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container container--narrow">
+
+      <p class="mtsum" id="mtStart">Åbner Mine tider…</p>
+
+      <!-- Log ind -->
+      <section id="mtLogin" hidden>
+        <header class="section__head section__head--center">
+          <p class="kicker">Kun for Michael</p>
+          <h1>Log ind</h1>
+        </header>
+        <div class="booking">
+          <form class="booking__fields booking__fields--login" id="mtLoginForm" novalidate>
+            <div class="field">
+              <label for="mtEmail">E-mail</label>
+              <input id="mtEmail" type="email" autocomplete="username" placeholder="din e-mail" />
+            </div>
+            <div class="field">
+              <label for="mtKode">Adgangskode</label>
+              <input id="mtKode" type="password" autocomplete="current-password" placeholder="Din adgangskode" />
+            </div>
+            <button type="submit" class="btn btn--solid btn--full">Log ind</button>
+            <p class="mtpanel__besked" id="mtLoginFejl" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+        <p class="bookpage__reassure">
+          <button type="button" class="mtlink" id="mtGlemt">Jeg har glemt min adgangskode</button>
+        </p>
+      </section>
+
+      <!-- Mine tider -->
+      <section id="mtApp" hidden>
+        <nav class="mtfaner" aria-label="Sider">
+          <button type="button" class="mtfane" id="mtFaneTider" aria-pressed="true">Mine tider</button>
+          <button type="button" class="mtfane" id="mtFaneBookinger" aria-pressed="false">Bookinger</button>
+        </nav>
+
+        <!-- fane 1: tider -->
+        <div id="mtSideTider">
+          <p class="mtsum" id="mtSum"></p>
+          <p class="mtstatus" id="mtStatus" role="status" aria-live="polite"></p>
+          <div id="mtDage" class="mtdage"></div>
+        </div>
+
+        <!-- fane 2: bookinger -->
+        <div id="mtSideBookinger" hidden>
+          <div id="mtBookinger" class="mtbookinger"></div>
+        </div>
+
+        <p class="bookpage__reassure" id="mtHvem"></p>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-functions-compat.js"></script>
+  <script src="tilgaengelighed.js"></script>
+  <script src="firebase-store.js"></script>
+  <script src="mine-tider.js"></script>
+</body>
+</html>

@@ -10,3 +10,19 @@ www/
 **/.DS_Store
 node_modules/
 *.log
+
+# Lokal testside: viser Mine tider med kunstige data, uden login
+_test-kalender.html
+
+# Cloud Functions afhængigheder
+firebase/functions/node_modules/
+
+# Lokale forhåndsvisninger af bekræftelsesmailene
+_mail-forhaandsvisning/
+
+# Firebase-værktøjet opretter gerne en .env af sig selv, og den ville
+# indeholde hemmeligheder. Den må ALDRIG committes.
+firebase/functions/.env
+firebase/functions/.env.*
+.env
+.env.*

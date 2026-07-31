@@ -12,23 +12,16 @@
 
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ---------- Michael's config ----------
-  // NOTE: opening hours are PLACEHOLDERS — Michael must confirm his real hours.
-  const SERVICES = [
-    { key: "30", name: "30 minutter", desc: "Fokuseret behandling af ét område",   minutes: 30, price: 300 },
-    { key: "60", name: "60 minutter", desc: "Grundig behandling af flere områder", minutes: 60, price: 500 },
-    { key: "90", name: "90 minutter", desc: "Helkropsmassage",                     minutes: 90, price: 750 },
-  ];
-  // weekday 0=søn..6=lør → opening window (local Danish time). Closed days omitted.
-  const HOURS = {
-    1: { open: "08:00", close: "18:00" }, // mandag
-    2: { open: "08:00", close: "18:00" }, // tirsdag
-    3: { open: "08:00", close: "18:00" }, // onsdag
-    4: { open: "08:00", close: "18:00" }, // torsdag
-    5: { open: "08:00", close: "15:00" }, // fredag
-  };
-  const DAYS_TO_SHOW = 14;
-  const LOOKAHEAD = 30;
+  // ---------- indstillinger ----------
+  // Der findes IKKE længere hardkodede åbningstider. En dag er lukket, indtil
+  // Michael selv åbner den i "Mine tider". Ydelser, varsel og horisont kommer
+  // fra datalaget, så han er den eneste kilde til hvad der er ledigt.
+  const T = window.MHTid;
+  const Store = window.MHStore;
+  let CONFIG = T.STANDARD_CONFIG;
+  // datalagets form → den form UI-koden herunder allerede bruger
+  const somUI = (y) => ({ key: y.key, name: y.navn, desc: y.beskrivelse, minutes: y.minutter, price: y.pris });
+  let SERVICES = (CONFIG.ydelser || []).map(somUI);
   const CONTACT_KEY = "mh.booking.contact";
 
   // ---------- helpers ----------
@@ -44,44 +37,33 @@
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  // ---------- MOCK backend (the seam — swapped for Firebase in phase 2) ----------
-  const booked = new Set(); // "dayKey|HH:MM" already taken (demo only)
-
+  // ---------- datalaget (sømmen — byttes til Firebase i fase 2) ----------
+  // Al regning ligger i tilgaengelighed.js, som Mine tider bruger PRÆCIS også.
+  // Ellers ville Michaels forhåndsvisning før eller siden vise noget andet
+  // end det, kunderne får at se.
   const BookingBackend = {
     async availableDays() {
-      const out = [];
-      const now = new Date();
-      for (let i = 0; i < LOOKAHEAD && out.length < DAYS_TO_SHOW; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-        if (HOURS[d.getDay()]) out.push(d);
-      }
-      return out;
+      const isoer = T.datoerFrem(CONFIG.horisontDage).map(T.isoOf);
+      const dage = await Store.dage(isoer);
+      const nu = new Date();
+      return isoer
+        .filter((iso) => T.harLedigeTider(dage[iso], CONFIG, nu))
+        .map(T.datoFraISO);
     },
     async slots(serviceKey, date) {
-      const h = HOURS[date.getDay()];
-      if (!h) return [];
       const svc = svcOf(serviceKey);
-      const step = Math.max(svc.minutes, 30);
-      const open = hhmmToMin(h.open), close = hhmmToMin(h.close);
-      const key = dayKeyOf(date);
-      const now = new Date();
-      const isToday = key === dayKeyOf(now);
-      const cutoff = now.getHours() * 60 + now.getMinutes() + 60; // 1h notice today
-      const out = [];
-      for (let t = open; t + svc.minutes <= close; t += step) {
-        const time = minToHHMM(t);
-        if (booked.has(`${key}|${time}`)) continue;
-        if (isToday && t < cutoff) continue;
-        out.push(time);
-      }
-      return out;
+      if (!svc) return [];
+      const dag = await Store.dag(T.isoOf(date));
+      return T.ledigeStarter(dag, CONFIG, { minutter: svc.minutes }, new Date()).map(T.minTilHHMM);
     },
-    async book({ serviceKey, date, time }) {
-      await new Promise((r) => setTimeout(r, 450)); // mimic a network round-trip
-      const id = `${dayKeyOf(date)}|${time}`;
-      if (booked.has(id)) return { ok: false, reason: "taken" };
-      booked.add(id);
-      return { ok: true };
+    async book({ serviceKey, date, time, name, phone, email, note }) {
+      const res = await Store.book({
+        dato: T.isoOf(date),
+        startMin: T.hhmmTilMin(time),
+        ydelseKey: serviceKey,
+        navn: name, telefon: phone, email: email, besked: note,
+      });
+      return { ok: res.ok, reason: res.grund, id: res.id };
     },
   };
 
@@ -97,10 +79,33 @@
     phone:    root.querySelector("#bkPhone"),
     email:    root.querySelector("#bkEmail"),
     note:     root.querySelector("#bkNote"),
-    summary:  root.querySelector("#bkSummary"),
     confirm:  root.querySelector("#bkConfirm"),
     live:     root.querySelector("#bkLive"),
   };
+
+  // ---------- "Din tid" (kvitteringen i bunden) ----------
+  const tid = {
+    service: root.querySelector("#bkTidService"),
+    day:     root.querySelector("#bkTidDay"),
+    time:    root.querySelector("#bkTidTime"),
+    price:   root.querySelector("#bkTidPrice"),
+    gap:     root.querySelector("#bkTidGap"),
+  };
+  // startteksten står i HTML og læses herfra, så skærmlæseren ikke
+  // får noget læst op allerede ved sideindlæsning
+  let gapMsg = tid.gap ? tid.gap.textContent.trim() : "";
+
+  const upFirst = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const endOf = (time, minutes) => minToHHMM(hhmmToMin(time) + minutes);
+
+  // Skriver én værdi. Kun textContent, så intet kundeinput kan tolkes som HTML.
+  function setFact(node, value) {
+    if (!node) return;
+    const filled = Boolean(value);
+    node.textContent = filled ? value : node.dataset.wait;
+    node.classList.toggle("tid__value--wait", !filled);
+    node.classList.remove("tid__value--next");
+  }
 
   // ---------- services ----------
   function renderServices() {
@@ -172,7 +177,7 @@
       list = await BookingBackend.slots(state.serviceKey, wanted);
     } catch {
       if (state.date !== wanted) return;
-      el.times.innerHTML = context + `<p class="booking__hint">Kunne ikke hente tider — prøv igen, eller ring 23 90 60 68.</p>`;
+      el.times.innerHTML = context + `<p class="booking__hint">Kunne ikke hente tider. Prøv igen, eller ring 23 90 60 68.</p>`;
       return;
     }
     if (state.date !== wanted) return; // a newer selection won
@@ -218,7 +223,14 @@
   // ---------- summary + confirm gating ----------
   const nameOK = () => el.name.value.trim().length > 0;
   const phoneOK = () => el.phone.value.trim().length > 0;
-  const ready = () => state.serviceKey && state.date && state.time && nameOK() && phoneOK();
+  // Fanges her, mens kunden stadig står på siden og kan rette den. Bagefter
+  // kan ingen nå hende. En adresse med slåfejl er værre end ingen adresse:
+  // så tror hun, hun har en kvittering, og den findes ikke.
+  const mailOK = () => {
+    const v = el.email ? el.email.value.trim() : "";
+    return !v || /^[^\s@<>,;:"'\\]+@[^\s@<>,;:"'\\]+\.[a-zA-Z]{2,}$/.test(v);
+  };
+  const ready = () => state.serviceKey && state.date && state.time && nameOK() && phoneOK() && mailOK();
 
   function nextGap() {
     if (!state.serviceKey) return "Vælg en behandling";
@@ -226,22 +238,35 @@
     if (!state.time) return "Vælg en tid";
     if (!nameOK()) return "Skriv dit navn";
     if (!phoneOK()) return "Skriv dit telefonnummer";
+    if (!mailOK()) return "Tjek din e-mailadresse";
     return null;
   }
 
   function update() {
-    const parts = [];
-    if (state.serviceKey) {
-      const s = svcOf(state.serviceKey);
-      parts.push(`${s.name} <span class="price">· ${s.price} kr.</span>`);
-    }
-    if (state.date) parts.push(escapeHtml(fullDayLabel(state.date)));
-    if (state.time) parts.push(`kl. ${escapeHtml(state.time)}`);
+    const svc = state.serviceKey ? svcOf(state.serviceKey) : null;
+
+    setFact(tid.service, svc ? svc.name : "");
+    setFact(tid.day, state.date ? upFirst(fullDayLabel(state.date)) : "");
+    setFact(tid.time, state.time
+      ? (svc ? `kl. ${state.time} til ${endOf(state.time, svc.minutes)}` : `kl. ${state.time}`)
+      : "");
+    setFact(tid.price, svc ? `${svc.price} kr.` : "");
+
+    // peg roligt på den første række, der mangler
+    const waiting = [tid.service, tid.day, tid.time]
+      .find((n) => n && n.classList.contains("tid__value--wait"));
+    if (waiting) waiting.classList.add("tid__value--next");
+
     const gap = nextGap();
-    let html = parts.length ? parts.join(" · ") : "Vælg behandling, dag og tid.";
-    if (gap && parts.length) html += ` <span class="booking__missing">· ${gap.toLowerCase()}</span>`;
-    el.summary.innerHTML = html;
+    const msg = gap ? `${gap}.` : "";
+    // skriv kun ved reel ændring, ellers læser skærmlæseren op ved hvert tastetryk
+    if (tid.gap && msg !== gapMsg) { tid.gap.textContent = msg; gapMsg = msg; }
+
     el.confirm.disabled = !ready();
+    // beskrivelsen gives først når knappen faktisk kan fokuseres
+    if (gap) el.confirm.removeAttribute("aria-label");
+    else el.confirm.setAttribute("aria-label",
+      `Bekræft booking: ${svc.name}, ${fullDayLabel(state.date)} kl. ${state.time}, ${svc.price} kr.`);
   }
 
   // ---------- confirm ----------
@@ -266,51 +291,88 @@
     } catch {
       el.confirm.textContent = original;
       el.confirm.disabled = false;
-      el.live.textContent = "Noget gik galt — prøv igen, eller ring 23 90 60 68.";
+      el.live.textContent = "Noget gik galt. Prøv igen, eller ring 23 90 60 68.";
       return;
     }
     if (!res.ok) {
       el.confirm.textContent = original;
-      el.confirm.disabled = false;
-      el.live.textContent = "Den tid blev desværre lige booket. Vælg venligst en anden tid.";
-      renderTimes();
+      if (res.reason === "optaget") {
+        state.time = null; // ellers står kvitteringen og lover en tid, der ikke findes
+        el.live.textContent = "Den tid blev desværre lige booket. Vælg venligst en anden tid.";
+        renderTimes();
+      } else {
+        el.live.textContent = "Noget gik galt, og tiden blev ikke booket. Prøv igen, eller ring 23 90 60 68.";
+      }
+      update(); // sætter selv knappen korrekt
       return;
     }
+    state.id = res.id;
     saveContact();
     succeed(svc);
   }
 
   // ---------- add-to-calendar (.ics) ----------
-  function icsHref(svc, date, time) {
-    const [hh, mm] = time.split(":").map(Number);
-    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hh, mm);
-    const end = new Date(start.getTime() + svc.minutes * 60000);
-    const fmt = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  // Kalenderfilen. Den SKAL være den samme begivenhed som mailens vedhæftning,
+  // ellers får kunden to poster i kalenderen. Derfor aftalens eget id som UID.
+  // ⚠️ LOCATION indeholder kun byen, fordi vi ikke kender vej og husnummer.
+  // Ret KLINIK.adresse i functions/index.js OG linjen herunder samtidig.
+  function icsHref(svc, date, time, id) {
+    const fra = hhmmToMin(time);
+    const lokal = (minutter) => {
+      let d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      let m = minutter;
+      while (m >= 1440) { m -= 1440; d = new Date(d.getTime() + 864e5); }
+      return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}` +
+             `T${pad(Math.floor(m / 60))}${pad(m % 60)}00`;
+    };
+    // DTSTAMP er hvornår filen blev lavet, i UTC. Før stod aftalens egen tid der.
+    const naa = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
     const ics = [
-      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//MH Sportsmassage//Booking//DA", "CALSCALE:GREGORIAN",
-      "BEGIN:VEVENT", `UID:mh-${fmt(start)}@mhsportsmassage.dk`,
-      `DTSTAMP:${fmt(start)}`, `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`,
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//MH Sportsmassage//Booking//DA",
+      "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+      "BEGIN:VTIMEZONE", "TZID:Europe/Copenhagen",
+      "BEGIN:DAYLIGHT", "TZOFFSETFROM:+0100", "TZOFFSETTO:+0200", "TZNAME:CEST",
+      "DTSTART:19700329T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU", "END:DAYLIGHT",
+      "BEGIN:STANDARD", "TZOFFSETFROM:+0200", "TZOFFSETTO:+0100", "TZNAME:CET",
+      "DTSTART:19701025T030000", "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU", "END:STANDARD",
+      "END:VTIMEZONE",
+      "BEGIN:VEVENT",
+      `UID:${id || "mh-" + lokal(fra)}@mhsportsmassage.dk`,
+      "SEQUENCE:0", `DTSTAMP:${naa}`,
+      `DTSTART;TZID=Europe/Copenhagen:${lokal(fra)}`,
+      `DTEND;TZID=Europe/Copenhagen:${lokal(fra + svc.minutes)}`,
+      "STATUS:CONFIRMED", "TRANSP:OPAQUE",
       `SUMMARY:${svc.name} hos MH Sportsmassage`,
       "LOCATION:MH Sportsmassage\\, Bjæverskov",
-      "DESCRIPTION:Booket hos Michael Hansen. Betaling med MobilePay eller kontant i klinikken. Tlf. 23 90 60 68.",
+      "DESCRIPTION:Betaling med MobilePay eller kontant i klinikken. Tlf. 23 90 60 68.",
+      "BEGIN:VALARM", "ACTION:DISPLAY",
+      "DESCRIPTION:Tid hos MH Sportsmassage om 2 timer", "TRIGGER:-PT2H", "END:VALARM",
       "END:VEVENT", "END:VCALENDAR",
-    ].join("\r\n");
+    ].join("\r\n") + "\r\n";
     return "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
   }
 
   // ---------- success ----------
   function succeed(svc) {
     const name = el.name.value.trim();
-    const ics = icsHref(svc, state.date, state.time);
+    const mail = el.email ? el.email.value.trim() : "";
+    const ics = icsHref(svc, state.date, state.time, state.id);
     root.classList.add("booking--done");
     root.innerHTML =
       `<div class="booking__success" role="status">` +
         `<div class="booking__check" aria-hidden="true">✓</div>` +
         `<h3 id="bkDoneHeading" tabindex="-1">Tak${name ? ", " + escapeHtml(name) : ""}!</h3>` +
-        `<p class="booking__confirm">Din tid er reserveret:<br>` +
-          `<strong>${svc.name} · ${fullDayLabel(state.date)} kl. ${state.time}</strong></p>` +
-        `<p class="booking__confirm-sub">Michael bekræfter din tid pr. telefon. Du ser ham i klinikken i ` +
-          `Bjæverskov — betaling med MobilePay eller kontant. Du kan roligt tage et skærmbillede af denne bekræftelse.</p>` +
+        `<p class="booking__confirm">Din tid er booket:<br>` +
+          `<strong>${svc.name} · ${upFirst(fullDayLabel(state.date))} kl. ${state.time} ` +
+          `til ${endOf(state.time, svc.minutes)}</strong></p>` +
+        `<p class="booking__confirm-sub">${svc.price} kr. Du betaler i klinikken i Bjæverskov ` +
+          `med MobilePay eller kontant. Tiden er din med det samme, du behøver ikke gøre mere. ` +
+          `Du kan roligt tage et skærmbillede af denne bekræftelse.</p>` +
+        // "Inden for få minutter", ikke "om et øjeblik": en ny afsender kan
+        // blive forsinket op til en halv time af modtagerens spamfilter.
+        `<p class="booking__confirm-sub">${mail
+          ? `Du får en bekræftelse på ${escapeHtml(mail)} inden for få minutter. Kommer den ikke, så kig i spam.`
+          : "Vi har ikke din e-mail, så du får ingen bekræftelse på skrift. Tag gerne et skærmbillede af denne side."}</p>` +
         `<div class="booking__actions">` +
           `<a class="btn btn--solid" href="${ics}" download="mh-sportsmassage.ics">Tilføj til kalender</a>` +
           `<a href="index.html" class="btn btn--outline">Til forsiden</a>` +
@@ -340,28 +402,46 @@
     } catch { /* ignore */ }
   }
 
-  // ---------- seed a couple of demo "taken" slots (mock only) ----------
-  function seedDemo() {
-    if (days[0]) booked.add(`${dayKeyOf(days[0])}|09:00`);
-    if (days[0]) booked.add(`${dayKeyOf(days[0])}|10:30`);
-    if (days[1]) booked.add(`${dayKeyOf(days[1])}|08:00`);
+  // ---------- ingen åbne tider ----------
+  // Under "lukket som standard" er det her NORMALTILSTANDEN, ikke en kantsituation.
+  // Derfor får den en rigtig skærm med et telefonnummer, ikke en tom dagstribe
+  // med "Stryg for at se flere dage" stående under.
+  function visLukket(grund) {
+    const besked = (CONFIG.besked || "").trim();
+    root.classList.add("booking--lukket");
+    root.innerHTML =
+      `<div class="booking__lukket">` +
+        `<h2>Der er ikke åbne tider lige nu</h2>` +
+        `<p>${escapeHtml(grund || besked ||
+            "Michael lægger nye tider ud, når han kender sin vagtplan.")}</p>` +
+        `<p>Ring, så finder vi en tid sammen.</p>` +
+        `<a class="btn btn--solid" href="tel:+4523906068">Ring 23 90 60 68</a>` +
+      `</div>`;
   }
 
   // ---------- init ----------
   (async () => {
+    try {
+      CONFIG = await Store.config();
+      SERVICES = (CONFIG.ydelser || []).map(somUI);
+    } catch { /* standardindstillingerne bruges */ }
+
+    if (CONFIG.lukket) { visLukket(); return; } // nødbremsen
+
     renderServices();
     try {
       days = await BookingBackend.availableDays();
     } catch {
-      el.days.innerHTML = `<p class="booking__hint">Kunne ikke hente dage — prøv igen, eller ring 23 90 60 68.</p>`;
+      visLukket("Vi kunne ikke hente tiderne lige nu.");
       return;
     }
-    seedDemo();
+    if (!days.length) { visLukket(); return; }
     renderDays();
     renderTimes();
     loadContact();
     el.name.addEventListener("input", update);
     el.phone.addEventListener("input", update);
+    if (el.email) el.email.addEventListener("input", update);
     el.confirm.addEventListener("click", confirm);
     update();
   })();

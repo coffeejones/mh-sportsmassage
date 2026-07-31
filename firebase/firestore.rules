@@ -1,0 +1,92 @@
+rules_version = '2';
+
+// MH Sportsmassage. Der er præcis TRE aktører:
+//   1. OFFENTLIGHEDEN (intet login) læser ledige tider. Intet andet.
+//   2. EN GÆSTEKUNDE (anonymt login) booker, men KUN gennem Cloud Function'en.
+//   3. MICHAEL åbner tider og læser aftaler.
+//
+// ⚠️ FÆLDEN I NETOP DETTE SYSTEM: kunderne er logget ind ANONYMT, så
+// `request.auth != null` er sandt for hver eneste besøgende på internettet.
+// En admin-regel må derfor ALDRIG nøjes med "er logget ind" — den skal
+// matche Michaels konkrete uid.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function erMichael() {
+      return request.auth != null
+             && request.auth.uid in [
+                  "2BAO7nBB1UUIUyARu6d3RVgKLW03"  // michael.hansen2612@gmail.com
+                  // Mister han sin konto, oprettes en ny bruger i konsollen,
+                  // og dens uid sættes ind her. Under fem minutter, fra en
+                  // hvilken som helst computer.
+                ];
+    }
+
+    // ---- dage: offentlig læsning, kun Michael skriver ----------------------
+    // Indeholder KUN tal. Aldrig navne, aldrig fritekst, aldrig uid.
+    match /dage/{dato} {
+      allow read: if true;
+
+      allow create: if erMichael()
+                    && gyldigDag()
+                    && request.resource.data.get('optaget', {}).size() == 0;
+
+      // .get() med standardværdi: et felt der ikke findes, får ellers HELE
+      // reglen til at fejle, altså permission-denied på præcis de dage der
+      // IKKE har aftaler — altså næsten alle dage.
+      allow update: if erMichael()
+                    && gyldigDag()
+                    && request.resource.data.get('optaget', {})
+                       == resource.data.get('optaget', {});
+
+      // En dag med aftaler i må ikke slettes. Ellers kan en fejl i klienten
+      // frigive en tid, mens kundens aftale stadig findes.
+      allow delete: if erMichael()
+                    && resource.data.get('optaget', {}).size() == 0;
+
+      // Form og størrelse. Regler kan ikke løkke over lister, så indholdet af
+      // `vinduer` kan ikke valideres her. Det er en type- og størrelsesgrænse,
+      // ikke en indholdsgaranti, og kundesiden skal derfor tegne defensivt.
+      function gyldigDag() {
+        return request.resource.data.dato == dato
+               && request.resource.data.vinduer is list
+               && request.resource.data.vinduer.size() <= 8
+               && !request.resource.data.keys().hasAny(['navn', 'telefon', 'besked']);
+      }
+    }
+
+    // ---- aftaler: det ENESTE sted der ligger persondata --------------------
+    match /aftaler/{id} {
+      allow read: if erMichael();
+
+      // LÅST. Aftaler skrives kun af Cloud Functions, som tager tiden og
+      // skriver aftalen i ÉN transaktion. Kunne klienten skrive her, kunne
+      // enhver opfinde en pris, en varighed eller en tid på en lukket dag,
+      // og dobbeltbooking ville være tilbage.
+      allow write: if false;
+    }
+
+    // ---- indstillinger ----------------------------------------------------
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if erMichael()
+                   && request.resource.data.varselTimer is int
+                   && request.resource.data.varselTimer >= 0
+                   && request.resource.data.varselTimer <= 168
+                   && request.resource.data.pauseMinutter is int
+                   && request.resource.data.pauseMinutter >= 0
+                   && request.resource.data.pauseMinutter <= 60;
+    }
+
+    // ---- tælleren bag spam-loftet (kun funktionen rører den) ---------------
+    match /bookingTaellere/{uid} {
+      allow read, write: if false;
+    }
+
+    // ---- alt andet --------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

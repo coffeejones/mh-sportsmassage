@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Book en tid — MH Sportsmassage</title>
-  <meta name="description" content="Book en tid online hos MH Sportsmassage v/ Michael Hansen i Bjæverskov — sportsmassage, manuel terapi, akupunktur og cupping. Vælg behandling, dag og tid." />
+  <title>Book en tid hos MH Sportsmassage</title>
+  <meta name="description" content="Book en tid online hos MH Sportsmassage v/ Michael Hansen i Bjæverskov. Sportsmassage, manuel terapi, akupunktur og cupping. Vælg behandling, dag og tid." />
+    <!-- TESTPERIODE: hold siden ude af Google, indtil den går live.
+       ⚠️ SLET denne linje sammen med robots.txt, når domænet sættes på. -->
+  <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2040%2040'%3E%3Crect%20x='2'%20y='2'%20width='36'%20height='36'%20rx='9'%20fill='%23ffffff'%20stroke='%232c6244'%20stroke-width='2.5'/%3E%3Ctext%20x='20'%20y='27'%20text-anchor='middle'%20font-family='system-ui,Arial,sans-serif'%20font-size='17'%20font-weight='700'%20fill='%232c6244'%20letter-spacing='-.5'%3EMH%3C/text%3E%3C/svg%3E" />
 </head>
@@ -28,8 +31,8 @@
         <p class="kicker">Book online</p>
         <h1>Book en tid</h1>
         <p class="section__intro">
-          Vælg behandling, dag og tid — nemt og uden konto. Ingen betaling online;
-          du betaler med MobilePay eller kontant i klinikken.
+          Vælg blandt de tider, Michael har ledige. Nemt og uden konto. Ingen betaling
+          online; du betaler med MobilePay eller kontant i klinikken.
         </p>
       </header>
 
@@ -63,21 +66,50 @@
             </div>
           </div>
           <div class="field">
-            <label for="bkEmail">E-mail <span class="field__opt">— valgfrit, så får du en bekræftelse</span></label>
+            <label for="bkEmail">E-mail <span class="field__opt">(valgfrit). Skriver du den, får du din bekræftelse på skrift.</span></label>
             <input id="bkEmail" type="email" autocomplete="email" placeholder="din@email.dk" />
           </div>
           <div class="field">
-            <label for="bkNote">Besked til Michael <span class="field__opt">— valgfrit, fx hvad der driller</span></label>
-            <textarea id="bkNote" rows="3" placeholder="Fx: ømhed i lænden efter løb"></textarea>
+            <label for="bkNote">Praktisk besked <span class="field__opt">(valgfrit)</span></label>
+            <textarea id="bkNote" rows="2" placeholder="Fx: jeg kommer lidt før"></textarea>
+            <p class="field__hint">Skriv ikke helbredsoplysninger her. Dem tager vi i klinikken. Beskeden sendes videre til Michael på mail.</p>
           </div>
         </div>
 
         <div class="booking__foot">
-          <p class="booking__summary" id="bkSummary">Vælg behandling, dag og tid.</p>
+          <div class="tid">
+            <p class="tid__title">Din tid</p>
+
+            <div class="tid__list">
+              <p class="tid__label">Behandling</p>
+              <p class="tid__value tid__value--wait" id="bkTidService"
+                 data-wait="Ikke valgt endnu">Ikke valgt endnu</p>
+
+              <p class="tid__label">Dag</p>
+              <p class="tid__value tid__value--wait" id="bkTidDay"
+                 data-wait="Ikke valgt endnu">Ikke valgt endnu</p>
+
+              <p class="tid__label">Tid</p>
+              <p class="tid__value tid__value--wait" id="bkTidTime"
+                 data-wait="Ikke valgt endnu">Ikke valgt endnu</p>
+
+              <div class="tid__rule" aria-hidden="true"></div>
+
+              <p class="tid__label tid__label--sum">Pris</p>
+              <p class="tid__value tid__value--sum tid__value--wait" id="bkTidPrice"
+                 data-wait="Følger behandlingen">Følger behandlingen</p>
+            </div>
+
+            <p class="tid__pay">Du betaler i klinikken med MobilePay eller kontant.</p>
+          </div>
+
+          <p class="tid__gap" id="bkTidGap" aria-live="polite">Vælg en behandling.</p>
+
           <button type="button" class="btn btn--solid btn--full" id="bkConfirm" disabled>Bekræft booking</button>
+
           <p class="booking__note">
-            Uforpligtende — skal du ombooke eller afmelde, så ring 23 90 60 68, gerne senest 24 timer før.
-            Michael bekræfter din tid pr. telefon.
+            Din tid er booket med det samme. Skal du ombooke eller afmelde, så ring
+            <a href="tel:+4523906068">23 90 60 68</a>, gerne senest 24 timer før.
           </p>
           <p class="booking__live" id="bkLive" role="status" aria-live="polite"></p>
         </div>
@@ -108,6 +140,12 @@
   </footer>
 
   <script src="script.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-functions-compat.js"></script>
+  <script src="tilgaengelighed.js"></script>
+  <script src="firebase-store.js"></script>
   <script src="booking.js"></script>
 </body>
 </html>

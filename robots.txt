@@ -1,0 +1,8 @@
+# TESTPERIODE. Siden ligger på en github.io-adresse, mens Michael og Jonas
+# prøver booking og bekræftelsesmails af. Den må ikke kunne findes i Google
+# imens, for så kan en kunde lande på en testudgave.
+#
+# ⚠️ SLET DENNE FIL, når mhsportsmassage.dk sættes på og siden går live.
+# Så længe den ligger her, bliver siden ALDRIG fundet i en søgning.
+User-agent: *
+Disallow: /
