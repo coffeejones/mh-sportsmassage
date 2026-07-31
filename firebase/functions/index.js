@@ -269,7 +269,7 @@ const UDLOESER_REGION = "europe-west1";
 // Jonas har bekræftet, at det er gmail-adressen, Michael faktisk åbner på
 // telefonen. michael@mhsportsmassage.dk er IKKE verificeret som en postkasse,
 // der kan modtage, og en notifikation, der hardbouncer, er værre end ingen.
-const MICHAEL_MODTAGERE = ["michael.hansen2612@gmail.com"];
+const MICHAEL_MODTAGERE = ["jonas0504hansen@gmail.com"];
 
 // Kundens "Svar" skal lande et sted, han LÆSER. Derfor samme adresse.
 // ⚠️ Virker michael@mhsportsmassage.dk en dag som rigtig postkasse, så sæt
