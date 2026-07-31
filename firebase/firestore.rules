@@ -16,7 +16,7 @@ service cloud.firestore {
     function erMichael() {
       return request.auth != null
              && request.auth.uid in [
-                  "2BAO7nBB1UUIUyARu6d3RVgKLW03"  // michael.hansen2612@gmail.com
+                  "2BAO7nBB1UUIUyARu6d3RVgKLW03"  // Michaels konto, se Firebase-konsollen
                   // Mister han sin konto, oprettes en ny bruger i konsollen,
                   // og dens uid sættes ind her. Under fem minutter, fra en
                   // hvilken som helst computer.

@@ -116,9 +116,12 @@
       b.className = "svc";
       b.setAttribute("aria-pressed", "false");
       b.innerHTML =
-        `<span class="svc__name">${s.name}</span>` +
-        `<span class="svc__desc">${s.desc}</span>` +
-        `<span class="svc__price">${s.price} kr.</span>`;
+        // escapeHtml, selv om værdierne kommer fra vores egen config: reglerne
+        // validerer ikke ydelser med ét eneste tegn, så det her er den eneste vej
+        // fra en kompromitteret admin-konto til kørende kode i kundens browser.
+        `<span class="svc__name">${escapeHtml(s.name)}</span>` +
+        `<span class="svc__desc">${escapeHtml(s.desc)}</span>` +
+        `<span class="svc__price">${escapeHtml(s.price)} kr.</span>`;
       b.addEventListener("click", () => {
         state.serviceKey = s.key;
         state.time = null;
@@ -169,7 +172,7 @@
       return;
     }
     const svc = svcOf(state.serviceKey);
-    const context = `<p class="booking__slotcontext">Ledige tider · <strong>${svc.name} · ${svc.price} kr.</strong></p>`;
+    const context = `<p class="booking__slotcontext">Ledige tider · <strong>${escapeHtml(svc.name)} · ${escapeHtml(svc.price)} kr.</strong></p>`;
     el.times.innerHTML = context + `<p class="booking__hint">Henter ledige tider…</p>`;
     const wanted = state.date;
     let list;
@@ -363,9 +366,9 @@
         `<div class="booking__check" aria-hidden="true">✓</div>` +
         `<h3 id="bkDoneHeading" tabindex="-1">Tak${name ? ", " + escapeHtml(name) : ""}!</h3>` +
         `<p class="booking__confirm">Din tid er booket:<br>` +
-          `<strong>${svc.name} · ${upFirst(fullDayLabel(state.date))} kl. ${state.time} ` +
+          `<strong>${escapeHtml(svc.name)} · ${upFirst(fullDayLabel(state.date))} kl. ${escapeHtml(state.time)} ` +
           `til ${endOf(state.time, svc.minutes)}</strong></p>` +
-        `<p class="booking__confirm-sub">${svc.price} kr. Du betaler i klinikken i Bjæverskov ` +
+        `<p class="booking__confirm-sub">${escapeHtml(svc.price)} kr. Du betaler i klinikken i Bjæverskov ` +
           `med MobilePay eller kontant. Tiden er din med det samme, du behøver ikke gøre mere. ` +
           `Du kan roligt tage et skærmbillede af denne bekræftelse.</p>` +
         // "Inden for få minutter", ikke "om et øjeblik": en ny afsender kan

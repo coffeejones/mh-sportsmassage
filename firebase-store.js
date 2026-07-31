@@ -86,7 +86,11 @@
       try { await auth.sendPasswordResetEmail(email.trim()); return { ok: true }; }
       catch { return { ok: false, fejl: "Kunne ikke sende mailen. Tjek adressen." }; }
     },
-    // Er den, der er logget ind, en RIGTIG bruger (ikke en anonym kunde)?
+    // ⚠️ KOSMETIK, IKKE SIKKERHED. Den styrer kun hvad der TEGNES. Enhver kan
+    // oprette en konto i projektet og blive "ikke-anonym", og så folder
+    // admin-skallen sig ud for dem. De får nul data, fordi Firestore-reglen
+    // matcher Michaels konkrete uid. Byg ALDRIG en regel eller en funktion,
+    // der stoler på den her i stedet for uid'et.
     erAdmin() {
       const b = auth.currentUser;
       return !!(b && !b.isAnonymous);
