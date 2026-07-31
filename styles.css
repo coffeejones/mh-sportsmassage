@@ -914,3 +914,12 @@ h3 { font-size: 1.28rem; letter-spacing: -.01em; }
   color: var(--ink); font-weight: 600; background: #fff;
   border: 1.5px solid var(--accent-dk); border-radius: 8px; padding: .5rem .7rem;
 }
+
+/* ===== Persondata ===== */
+.persondata h2 { font-size: 1.25rem; margin: 2.2rem 0 .7rem; }
+.persondata h2:first-child { margin-top: 0; }
+.persondata p { margin-bottom: 1rem; max-width: 62ch; }
+.persondata a { color: var(--accent); font-weight: 600; text-decoration: underline; }
+.pdliste { display: grid; gap: .7rem; margin: 0 0 1.2rem; max-width: 62ch; }
+.pdliste li { position: relative; padding-left: 1.5rem; color: var(--text); }
+.pdliste li::before { content: "·"; position: absolute; left: .4rem; color: var(--accent); font-weight: 700; }

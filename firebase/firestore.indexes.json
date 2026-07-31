@@ -1,4 +1,17 @@
 {
   "indexes": [],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "aftaler",
+      "fieldPath": "udloeber",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "bookingTaellere",
+      "fieldPath": "udloeber",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
 }

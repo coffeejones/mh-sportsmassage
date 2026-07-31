@@ -160,8 +160,15 @@ exports.bookAppointment = onCall({ enforceAppCheck: false }, async (request) => 
       status: "booket",
       kundeUID: uid,
       oprettet: FieldValue.serverTimestamp(),
-      // ⚠️ Felterne herunder er FORBEREDT til sletning, men der findes ingen
-      // TTL-politik endnu, så der slettes INTET automatisk i dag.
+      // `udloeber` ER en TTL-politik: Firestore sletter hele aftalen 12
+      // måneder efter behandlingen. Sat i firestore.indexes.json.
+      //
+      // ⚠️ `beskedUdloeber` er IKKE en TTL-politik og må ALDRIG blive det.
+      // En TTL sletter HELE dokumentet, ikke ét felt, så den ville fjerne
+      // aftalen 30 dage efter behandlingen. Feltet står som en påmindelse om,
+      // at fritekstbeskeden bør ryddes efter 30 dage, og det kræver en lille
+      // planlagt kørsel med FieldValue.delete() på `besked`, ikke en TTL.
+      // Indtil den findes, bliver beskeden liggende i de 12 måneder.
       beskedUdloeber: Timestamp.fromDate(new Date(start.getTime() + 30 * 864e5)),
       udloeber: Timestamp.fromDate(new Date(start.getTime() + 365 * 864e5)),
     });
@@ -259,8 +266,15 @@ const UDLOESER_REGION = "europe-west1";
 // Hans Google-konto er en gmail-adresse. Sæt den adresse ind, han rent
 // faktisk læser. Der må gerne stå to i listen, men hver ekstra adresse er
 // endnu en kopi af kundens navn og nummer.
-const MICHAEL_MODTAGERE = ["michael@mhsportsmassage.dk"];
-const SVAR_TIL = "michael@mhsportsmassage.dk";
+// Jonas har bekræftet, at det er gmail-adressen, Michael faktisk åbner på
+// telefonen. michael@mhsportsmassage.dk er IKKE verificeret som en postkasse,
+// der kan modtage, og en notifikation, der hardbouncer, er værre end ingen.
+const MICHAEL_MODTAGERE = ["michael.hansen2612@gmail.com"];
+
+// Kundens "Svar" skal lande et sted, han LÆSER. Derfor samme adresse.
+// ⚠️ Virker michael@mhsportsmassage.dk en dag som rigtig postkasse, så sæt
+// den ind her igen: den ser mere professionel ud i kundens indbakke.
+const SVAR_TIL = "michael.hansen2612@gmail.com";
 
 const KLINIK = {
   navn: "MH Sportsmassage",
