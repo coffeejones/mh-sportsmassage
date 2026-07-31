@@ -274,7 +274,7 @@ const MICHAEL_MODTAGERE = ["jonas0504hansen@gmail.com"];
 // Kundens "Svar" skal lande et sted, han LÆSER. Derfor samme adresse.
 // ⚠️ Virker michael@mhsportsmassage.dk en dag som rigtig postkasse, så sæt
 // den ind her igen: den ser mere professionel ud i kundens indbakke.
-const SVAR_TIL = "michael.hansen2612@gmail.com";
+const SVAR_TIL = "jonas0504hansen@gmail.com";
 
 const KLINIK = {
   navn: "MH Sportsmassage",
