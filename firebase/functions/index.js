@@ -189,15 +189,26 @@ exports.aflysAftale = onCall({ enforceAppCheck: false }, async (request) => {
   const uid = request.auth && request.auth.uid;
   if (!uid || uid !== MICHAEL_UID) throw new HttpsError("permission-denied", "Kun Michael kan aflyse.");
 
-  const id = String((request.data || {}).id || "");
+  const d = request.data || {};
+  const id = String(d.id || "");
   if (!id) throw new HttpsError("invalid-argument", "Mangler id.");
+
+  // Michaels egen begrundelse, som kunden får at læse. Valgfri: nogle gange
+  // skal en tid bare væk i en fart. Renset for linjeskift i enden og skåret
+  // til, så en fejl med tastaturet ikke sender en roman af sted.
+  const begrundelse = String(d.begrundelse || "")
+    .replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, 400);
 
   const aftaleRef = db.doc(`aftaler/${id}`);
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(aftaleRef);
     if (!snap.exists) throw new HttpsError("not-found", "Aftalen findes ikke.");
     const a = snap.data();
-    tx.update(aftaleRef, { status: "aflyst", aflystAt: FieldValue.serverTimestamp() });
+    tx.update(aftaleRef, {
+      status: "aflyst",
+      aflystAt: FieldValue.serverTimestamp(),
+      aflysBegrundelse: begrundelse,
+    });
     tx.set(db.doc(`dage/${a.dato}`), { optaget: { [id]: FieldValue.delete() } }, { merge: true });
   });
   return { ok: true };
@@ -623,16 +634,23 @@ function aflysningTilKunde(a, ydelseNavn) {
 
   const emne = `Aflyst: din tid hos MH Sportsmassage ${datoKort(a.dato)} kl. ${klok(a.fra)}`;
 
+  // Michaels egen begrundelse, hvis han skrev en. Den står lige efter tiderne,
+  // hvor kunden leder efter den, og før beroligelsen. En aflysning uden grund
+  // efterlader folk i tvivl om, hvorvidt de gjorde noget forkert.
+  const begrundelse = String(a.aflysBegrundelse || "").trim();
+
   const tekst = [
     hej, "",
     "Jeg er desværre nødt til at aflyse din tid:", "",
     `Behandling: ${ydelseNavn}`,
     `Dag: ${datoLang(a.dato)}`,
     `Tid: kl. ${klok(a.fra)} til ${klok(a.til)}`, "",
+    begrundelse ? begrundelse : null,
+    begrundelse ? "" : null,
     ingenting, "", nyTid, "", kalender, "",
     "Det er jeg ked af.", "",
     KLINIK.behandler, KLINIK.navn, `Tlf. ${KLINIK.telefon}`,
-  ].join("\n");
+  ].filter((l) => l !== null).join("\n");
 
   const html = skal({
     overskrift: "Din tid er desværre aflyst",
@@ -645,7 +663,9 @@ function aflysningTilKunde(a, ydelseNavn) {
       ["Dag", esc(datoLang(a.dato))],
       ["Tid", `kl. ${klok(a.fra)} til ${klok(a.til)}`],
     ],
-    boks: esc(ingenting),
+    boks: begrundelse
+      ? `${escFlere(begrundelse)}<br><br>${esc(ingenting)}`
+      : esc(ingenting),
     slut: [
       `Ring til mig på ${telLink(KLINIK.telefon)}, så finder vi en ny tid.`,
       esc(kalender),

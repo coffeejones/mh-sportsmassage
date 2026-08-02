@@ -923,3 +923,13 @@ h3 { font-size: 1.28rem; letter-spacing: -.01em; }
 .pdliste { display: grid; gap: .7rem; margin: 0 0 1.2rem; max-width: 62ch; }
 .pdliste li { position: relative; padding-left: 1.5rem; color: var(--text); }
 .pdliste li::before { content: "·"; position: absolute; left: .4rem; color: var(--accent); font-weight: 700; }
+
+/* Aflysnings-panelet. Michael skal kunne læse hvad der sker, skrive hvorfor,
+   og fortryde uden at have gjort noget. En browser-dialog kan ingen af delene. */
+.mtaflys {
+  margin-top: .7rem; padding-top: .8rem; border-top: 1px solid var(--border);
+  display: grid; gap: .8rem;
+}
+.mtaflys__info { margin: 0; color: var(--text); font-size: .9rem; line-height: 1.5; }
+.mtaflys__knapper { display: flex; gap: .6rem; flex-wrap: wrap; }
+.mtaflys__knapper .btn { flex: 1; min-width: 130px; min-height: 44px; }

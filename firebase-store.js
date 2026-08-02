@@ -220,9 +220,14 @@
       }
     },
 
-    async aflys(id) {
+    // `begrundelse` er valgfri og er Michaels egne ord til kunden. Den ryger
+    // med i aflysningsmailen, så kunden ikke sidder tilbage i tvivl om,
+    // hvorvidt hun gjorde noget forkert.
+    async aflys(id, begrundelse) {
       try {
-        await medFrist(fns.httpsCallable("aflysAftale")({ id }), FRIST);
+        await medFrist(fns.httpsCallable("aflysAftale")({
+          id, begrundelse: String(begrundelse || "").slice(0, 400),
+        }), FRIST);
         return { ok: true };
       } catch { return { ok: false }; }
     },

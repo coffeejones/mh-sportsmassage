@@ -1299,23 +1299,70 @@
       aflys.type = "button";
       aflys.className = "mtlink mtbooking__aflys";
       aflys.textContent = "Aflys";
-      aflys.addEventListener("click", async () => {
-        // Fra i dag FÅR kunden besked, hvis hun har oplyst en mail. Teksten
-        // ville ellers lyve fra det øjeblik, mailen blev slået til.
-        const harMail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(String(a.email || "").trim());
-        const ok = window.confirm(
-          `Aflys ${a.navn || "aftalen"} kl. ${T.minTilHHMM(a.fra)}?\n\n` +
-          (harMail
-            ? "Kunden får en mail med det samme. Er tiden inden for et døgn, så ring alligevel. "
-            : "Kunden har ikke oplyst en e-mail, så kunden får ikke besked. Du skal ringe. ") +
-          `Nummeret bliver stående bagefter.`);
-        if (!ok) return;
-        aflys.disabled = true;
-        aflys.textContent = "Aflyser…";
-        const svar = await Store.aflys(a.id);
+      const harMail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(String(a.email || "").trim());
+
+      // En browser-dialog kan ikke tage imod tekst, og Michael vil gerne
+      // skrive HVORFOR. Derfor et rigtigt panel i kortet i stedet: han kan
+      // læse hvad der sker, skrive en grund, og fortryde uden at have gjort
+      // noget. Feltet er valgfrit, for nogle gange skal en tid bare væk.
+      aflys.addEventListener("click", () => {
+        if (kort.querySelector(".mtaflys")) return;   // allerede åbent
+        aflys.hidden = true;
+
+        const panel = document.createElement("div");
+        panel.className = "mtaflys";
+
+        const info = document.createElement("p");
+        info.className = "mtaflys__info";
+        info.textContent = harMail
+          ? "Kunden får en mail med det samme. Er tiden inden for et døgn, så ring alligevel. Nummeret bliver stående bagefter."
+          : "Kunden har ikke oplyst en e-mail, så kunden får ikke besked. Du skal ringe. Nummeret bliver stående bagefter.";
+        panel.appendChild(info);
+
+        const felt = document.createElement("div");
+        felt.className = "field";
+        const mrk = document.createElement("label");
+        const feltId = "mtGrund_" + a.id;
+        mrk.setAttribute("for", feltId);
+        mrk.innerHTML = harMail
+          ? 'Hvorfor aflyser du? <span class="field__opt">(valgfrit, kunden kan læse det)</span>'
+          : 'Hvorfor aflyser du? <span class="field__opt">(valgfrit, til dig selv)</span>';
+        const omr = document.createElement("textarea");
+        omr.id = feltId;
+        omr.rows = 2;
+        omr.maxLength = 400;
+        omr.placeholder = "Fx: jeg er desværre blevet syg";
+        felt.append(mrk, omr);
+        panel.appendChild(felt);
+
+        const knapper = document.createElement("div");
+        knapper.className = "mtaflys__knapper";
+
+        const fortryd = document.createElement("button");
+        fortryd.type = "button";
+        fortryd.className = "btn btn--outline";
+        fortryd.textContent = "Behold tiden";
+        fortryd.addEventListener("click", () => { panel.remove(); aflys.hidden = false; aflys.focus(); });
+
+        const bekraeft = document.createElement("button");
+        bekraeft.type = "button";
+        bekraeft.className = "btn btn--solid";
+        bekraeft.textContent = "Aflys tiden";
+        knapper.append(fortryd, bekraeft);
+        panel.appendChild(knapper);
+
+        kort.appendChild(panel);
+        omr.focus();
+
+        bekraeft.addEventListener("click", async () => {
+        bekraeft.disabled = true;
+        fortryd.disabled = true;
+        bekraeft.textContent = "Aflyser…";
+        const svar = await Store.aflys(a.id, omr.value);
         if (!svar.ok) {
-          aflys.disabled = false;
-          aflys.textContent = "Aflys";
+          bekraeft.disabled = false;
+          fortryd.disabled = false;
+          bekraeft.textContent = "Aflys tiden";
           const p = document.createElement("p");
           p.className = "mtpanel__besked";
           p.setAttribute("role", "status");
@@ -1343,6 +1390,7 @@
         luk.textContent = "Jeg har ringet, fjern den";
         luk.addEventListener("click", async () => { await tegn(); tegnBookinger(); });
         kort.appendChild(luk);
+        });
       });
       kort.appendChild(aflys);
       box.appendChild(kort);
